@@ -1,6 +1,5 @@
-const serverModule = require("../dist/server/server.js");
+import { default as handler } from "../dist/server/server.js";
 
-module.exports = (req, res) => {
-  const handler = serverModule.default || serverModule;
-  return handler.fetch(req, res, {});
+export default async (req) => {
+  return handler.fetch(req, {}, {});
 };
