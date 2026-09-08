@@ -9,6 +9,8 @@ import {
 } from "@tanstack/react-router";
 import { type ReactNode } from "react";
 
+import "@/styles.css";
+
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
