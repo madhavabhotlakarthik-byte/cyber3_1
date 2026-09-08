@@ -1,9 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { createRequire } from "node:module";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const require = createRequire(import.meta.url);
 
 const possiblePaths = [
   join(__dirname, "dist", "server", "server.js"),
@@ -15,13 +13,16 @@ let handler;
 let loadPath;
 for (const p of possiblePaths) {
   try {
-    const mod = require(p);
+    const mod = await import(p);
     handler = mod.default || mod;
     loadPath = p;
     console.log("[api/index.js] Loaded from:", p, "typeof:", typeof handler);
+    if (handler && typeof handler.fetch === "function") {
+      console.log("[api/index.js] Handler is an object with fetch method");
+    }
     break;
   } catch (err) {
-    console.log("[api/index.js] Not found at:", p);
+    console.log("[api/index.js] Not found at:", p, err.message);
   }
 }
 
