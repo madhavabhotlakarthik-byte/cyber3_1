@@ -3,6 +3,35 @@ import { createServerFn } from "@tanstack/react-start";
 import { useSession } from "@tanstack/react-start/server";
 import { z } from "zod";
 
+type StudentInfo = { id: string; roll_number: string; name: string; section: string };
+type AttendanceInfo = { student_id: string; attendance_date: string; is_present: boolean };
+
+export const getStudents = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("students")
+    .select("id, roll_number, name, section")
+    .eq("active", true)
+    .order("roll_number");
+  if (error) throw new Error("Unable to load students.");
+  return (data ?? []) as StudentInfo[];
+});
+
+export const getAttendance = createServerFn({ method: "GET" })
+  .validator(z.object({ fromDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let query = supabaseAdmin.from("attendance").select("student_id, attendance_date, is_present");
+    if (data?.date) {
+      query = query.eq("attendance_date", data.date);
+    } else {
+      query = query.gte("attendance_date", data?.fromDate ?? "2026-09-01");
+    }
+    const { data: rows, error } = await query;
+    if (error) throw new Error("Unable to load attendance.");
+    return (rows ?? []) as AttendanceInfo[];
+  });
+
 type AttendanceSession = { isAdmin?: boolean };
 
 function sessionConfig() {

@@ -5,8 +5,7 @@ import { ArrowLeft, Check, LogOut, Save, Search, ShieldCheck, Sun } from "lucide
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getAdminStatus, loginAdmin, logoutAdmin, saveAttendance } from "@/lib/attendance.functions";
-import { supabase } from "@/integrations/supabase/client";
+import { getAdminStatus, getAttendance, getStudents, loginAdmin, logoutAdmin, saveAttendance } from "@/lib/attendance.functions";
 
 type Student = { id: string; roll_number: string; name: string; section: string };
 type AttendanceRow = { student_id: string; attendance_date: string; is_present: boolean };
@@ -37,13 +36,16 @@ function AdminDashboard() {
 
   const loadAttendance = async () => {
     setLoading(true);
-    const [studentResult, attendanceResult] = await Promise.all([
-      supabase.from("students").select("id, roll_number, name, section").eq("active", true).order("roll_number"),
-      supabase.from("attendance").select("student_id, attendance_date, is_present").eq("attendance_date", selectedDate),
-    ]);
-    if (studentResult.error || attendanceResult.error) toast.error("Could not load attendance.");
-    setStudents(studentResult.data ?? []);
-    setAttendance(attendanceResult.data ?? []);
+    try {
+      const [students, attendance] = await Promise.all([
+        getStudents(),
+        getAttendance({ data: { date: selectedDate } }),
+      ]);
+      setStudents(students);
+      setAttendance(attendance);
+    } catch {
+      toast.error("Could not load attendance.");
+    }
     setLoading(false);
   };
 

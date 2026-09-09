@@ -18,7 +18,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { supabase } from "@/integrations/supabase/client";
+import { getAttendance, getStudents } from "@/lib/attendance.functions";
 
 type Student = {
   id: string;
@@ -85,15 +85,15 @@ function AttendanceHome() {
 
   const loadData = async () => {
     setLoading(true);
-    const [studentResult, attendanceResult] = await Promise.all([
-      supabase.from("students").select("id, roll_number, name, section").eq("active", true).order("roll_number"),
-      supabase.from("attendance").select("student_id, attendance_date, is_present").gte("attendance_date", START_DATE),
-    ]);
-    if (studentResult.error || attendanceResult.error) {
+    try {
+      const [students, attendance] = await Promise.all([
+        getStudents(),
+        getAttendance({ data: { fromDate: START_DATE } }),
+      ]);
+      setStudents(students);
+      setAttendance(attendance);
+    } catch {
       toast.error("Attendance could not be loaded. Please try again.");
-    } else {
-      setStudents(studentResult.data ?? []);
-      setAttendance(attendanceResult.data ?? []);
     }
     setLoading(false);
   };
